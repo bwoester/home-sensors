@@ -1,0 +1,6 @@
+project_id = "home-sensors"
+
+[functions.collect-switchbot]
+# This function authenticates x-collector-token itself; it rejects missing tokens.
+verify_jwt = false
+entrypoint = "./functions/collect-switchbot/index.ts"
