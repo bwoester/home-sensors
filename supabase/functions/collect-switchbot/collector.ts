@@ -5,7 +5,7 @@ export type Config = {
   supabaseUrl: string; databaseKey: string; deviceIds?: string[];
 };
 
-const supported = new Set(['Meter', 'Meter Plus', 'Meter Plus (US)', 'Meter Plus (JP)', 'Hub 2']);
+const supported = new Set(['Meter', 'MeterPlus', 'Meter Plus', 'Meter Plus (US)', 'Meter Plus (JP)', 'Hub 2']);
 const json = (body: unknown, status = 200) => Response.json(body, { status });
 const object = (v: unknown): v is JsonObject => v !== null && typeof v === 'object' && !Array.isArray(v);
 
@@ -50,6 +50,12 @@ export function createHandler(config: Config, fetcher: typeof fetch = fetch, now
     try {
       const listing = await get('/devices');
       if (!object(listing.body) || !Array.isArray(listing.body.deviceList)) throw new Error('invalid_device_list');
+      const discoveredTypes: Record<string, number> = {};
+      for (const item of listing.body.deviceList) {
+        if (object(item) && typeof item.deviceType === 'string') {
+          discoveredTypes[item.deviceType] = (discoveredTypes[item.deviceType] ?? 0) + 1;
+        }
+      }
       const devices = listing.body.deviceList.filter((d): d is Device =>
         object(d) && typeof d.deviceId === 'string' && typeof d.deviceType === 'string' &&
         supported.has(d.deviceType) && (!config.deviceIds || config.deviceIds.includes(d.deviceId)));
@@ -84,7 +90,7 @@ export function createHandler(config: Config, fetcher: typeof fetch = fetch, now
         if (!response.ok) return json({ error: 'database_write_failed', status: response.status }, 502);
       }
       // Counts only: no tokens, device IDs, account metadata, or payloads in logs/responses.
-      return json({ submitted: rows.length, failed, poll_slot: pollSlot }, failed ? 502 : 200);
+      return json({ submitted: rows.length, failed, poll_slot: pollSlot, discovered_types: discoveredTypes }, failed ? 502 : 200);
     } catch {
       return json({ error: 'collection_failed' }, 502);
     }
