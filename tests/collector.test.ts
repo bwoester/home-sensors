@@ -24,7 +24,7 @@ test('retains unknown nested fields and unchanged observations, with retry-safe 
   let written: any;
   const handler = createHandler(config, async (input, init) => {
     const url = String(input);
-    if (url.endsWith('/devices')) return Response.json({ statusCode: 100, body: { deviceList: [{ deviceId: 'synthetic-meter', deviceType: 'Meter Plus (US)' }] } });
+    if (url.endsWith('/devices')) return Response.json({ statusCode: 100, body: { deviceList: [{ deviceId: 'synthetic-meter', deviceType: 'MeterPlus' }] } });
     if (url.endsWith('/status')) return Response.json(payload);
     assert.match(url, /on_conflict=device_id,poll_slot/);
     written = JSON.parse(String(init?.body));
